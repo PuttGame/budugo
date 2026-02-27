@@ -1,7 +1,7 @@
 {
-  "name": "Budugo",
-  "short_name": "Budugo",
-  "description": "Budugo - Minimal landscape fullscreen experience",
+  "name": "BuduGo!",
+  "short_name": "BuduGo!",
+  "description": "BuduGo! - Pengalaman minimalis landscape fullscreen hanya untuk ponsel resolusi tinggi.",
   "start_url": "/budugo/",
   "scope": "/budugo/",
   "display": "fullscreen",
@@ -20,6 +20,15 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/screenshot1.png",
+      "sizes": "1080x2400",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "BuduGo! landscape mode"
     }
   ]
 }
