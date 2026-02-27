@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=2400, height=1080, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <title>Budugo</title>
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Press Start 2P', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .pass {
+            font-size: 10px;
+            letter-spacing: 4px;
+            opacity: 0.7;
+            user-select: none;
+        }
+
+        /* Hanya tampil di ponsel */
+        @media (min-width: 1025px) {
+            .pass { display: none; }
+            body::after {
+                content: "WEBSITE INI HANYA UNTUK PONSEL";
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 18px;
+                color: red;
+                text-align: center;
+                padding: 20px;
+                border: 2px solid red;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pass">pass</div>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .catch(err => console.log('SW gagal:', err));
+            });
+        }
+
+        // Paksa Fullscreen + Landscape saat dibuka
+        window.addEventListener('load', async () => {
+            // Fullscreen
+            if (document.documentElement.requestFullscreen) {
+                try {
+                    await document.documentElement.requestFullscreen();
+                } catch (e) {}
+            }
+
+            // Lock landscape (khusus Android Chrome & PWA)
+            if (screen.orientation && screen.orientation.lock) {
+                try {
+                    await screen.orientation.lock('landscape');
+                } catch (e) {}
+            }
+        });
+
+        // Cegah zoom & scroll
+        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    </script>
+</body>
+</html>
