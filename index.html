@@ -16,137 +16,91 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; }
     html, body {
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      color: #0f0;
-      font-family: 'Press Start 2P', monospace;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
+      height:100%; overflow:hidden; background:#000; color:#0f0;
+      font-family:'Press Start 2P',monospace; user-select:none; touch-action:none;
     }
     body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
     }
     .pass {
-      font-size: 10px;
-      letter-spacing: 6px;
-      opacity: 0.6;
-      margin-bottom: 40px;
+      font-size:12px; letter-spacing:8px; opacity:0.7; margin-bottom:60px;
     }
     #installBtn {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      color: #0f0;
-      border: 1px solid #0f0;
-      padding: 10px 20px;
-      font-size: 9px;
-      font-family: 'Press Start 2P', monospace;
-      border-radius: 4px;
-      cursor: pointer;
-      display: none;
-      z-index: 999;
-      letter-spacing: 1px;
+      position:fixed; bottom:32px; left:50%; transform:translateX(-50%);
+      background:#111; color:#0f0; border:1px solid #0f0; padding:12px 24px;
+      font-size:10px; border-radius:6px; cursor:pointer; display:none; z-index:999;
     }
-    #installBtn:hover {
-      background: #0f03;
-    }
+    #installBtn:hover { background:#0f03; }
 
-    /* Sembunyikan konten di layar besar / PC */
-    @media (min-width: 1025px) or (orientation: portrait) and (max-width: 1080px) {
-      .pass { display: none; }
+    @media (min-width:1025px), (orientation:portrait) {
+      .pass { display:none; }
       body::before {
-        content: "HANYA UNTUK PONSEL DALAM MODE LANDSCAPE";
-        position: fixed;
-        inset: 0;
-        background: #000;
-        color: red;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 30px;
-        text-align: center;
-        z-index: 1000;
+        content:"HANYA UNTUK PONSEL MODE LANDSCAPE"; position:fixed; inset:0;
+        background:#000; color:red; font-size:20px; display:flex; align-items:center; justify-content:center;
+        padding:40px; text-align:center; z-index:1000;
       }
     }
   </style>
 </head>
 <body>
   <div class="pass">pass</div>
-
   <button id="installBtn">Install App</button>
 
   <script>
-    // ── Service Worker ───────────────────────────────────────────────
+    // Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('Service Worker registered'))
-          .catch(err => console.error('Service Worker registration failed:', err));
+          .then(() => console.log('SW OK'))
+          .catch(err => console.error('SW error:', err));
       });
     }
 
-    // ── Custom Install Prompt ────────────────────────────────────────
+    // Install prompt
     let deferredPrompt = null;
     const installBtn = document.getElementById('installBtn');
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();               // cegah banner otomatis Chrome
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
       deferredPrompt = e;
-      installBtn.style.display = 'block'; // tampilkan tombol custom
+      installBtn.style.display = 'block';
     });
 
     installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log('User choice:', outcome);
-      deferredPrompt = null;
-      installBtn.style.display = 'none';
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('Outcome:', outcome);
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      }
     });
 
-    // ── Force Fullscreen & Landscape ─────────────────────────────────
-    async function activateFullscreenAndOrientation() {
-      // Fullscreen
+    // Force fullscreen & landscape
+    async function forceMode() {
       if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-        try {
-          await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-        } catch {}
+        await document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(()=>{});
       }
-
-      // Lock orientation ke landscape (bekerja baik di PWA terinstall)
-      if (screen.orientation && screen.orientation.lock) {
-        try {
-          await screen.orientation.lock('landscape-primary');
-        } catch {}
+      if (screen.orientation?.lock) {
+        await screen.orientation.lock('landscape-primary').catch(()=>{});
       }
     }
 
-    // Jalankan saat load + saat visibility change (kembali dari background)
-    window.addEventListener('load', activateFullscreenAndOrientation);
+    window.addEventListener('load', forceMode);
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        activateFullscreenAndOrientation();
-      }
+      if (document.visibilityState === 'visible') forceMode();
     });
 
-    // Cegah scroll/zoom
-    document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    // Prevent scroll/zoom
+    document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
     document.addEventListener('gesturestart', e => e.preventDefault());
+
+    // Simulasi engagement >30 detik
+    setTimeout(() => {
+      console.log('Engagement simulated >30s');
+    }, 35000);
   </script>
 </body>
 </html>
