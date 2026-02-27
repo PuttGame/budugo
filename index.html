@@ -1,86 +1,152 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=2400, height=1080, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=2400, height=1080, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>Budugo</title>
-    <link rel="manifest" href="manifest.json">
+  <title>Budugo</title>
+  <link rel="manifest" href="manifest.json">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            background: #000;
-            color: #fff;
-            font-family: 'Press Start 2P', monospace;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .pass {
-            font-size: 10px;
-            letter-spacing: 4px;
-            opacity: 0.7;
-            user-select: none;
-        }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #0f0;
+      font-family: 'Press Start 2P', monospace;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .pass {
+      font-size: 10px;
+      letter-spacing: 6px;
+      opacity: 0.6;
+      margin-bottom: 40px;
+    }
+    #installBtn {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      font-size: 9px;
+      font-family: 'Press Start 2P', monospace;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;
+      z-index: 999;
+      letter-spacing: 1px;
+    }
+    #installBtn:hover {
+      background: #0f03;
+    }
 
-        /* Hanya tampil di ponsel */
-        @media (min-width: 1025px) {
-            .pass { display: none; }
-            body::after {
-                content: "WEBSITE INI HANYA UNTUK PONSEL";
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 18px;
-                color: red;
-                text-align: center;
-                padding: 20px;
-                border: 2px solid red;
-            }
-        }
-    </style>
+    /* Sembunyikan konten di layar besar / PC */
+    @media (min-width: 1025px) or (orientation: portrait) and (max-width: 1080px) {
+      .pass { display: none; }
+      body::before {
+        content: "HANYA UNTUK PONSEL DALAM MODE LANDSCAPE";
+        position: fixed;
+        inset: 0;
+        background: #000;
+        color: red;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+        text-align: center;
+        z-index: 1000;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="pass">pass</div>
+  <div class="pass">pass</div>
 
-    <script>
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .catch(err => console.log('SW gagal:', err));
-            });
-        }
+  <button id="installBtn">Install App</button>
 
-        // Paksa Fullscreen + Landscape saat dibuka
-        window.addEventListener('load', async () => {
-            // Fullscreen
-            if (document.documentElement.requestFullscreen) {
-                try {
-                    await document.documentElement.requestFullscreen();
-                } catch (e) {}
-            }
+  <script>
+    // ── Service Worker ───────────────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registered'))
+          .catch(err => console.error('Service Worker registration failed:', err));
+      });
+    }
 
-            // Lock landscape (khusus Android Chrome & PWA)
-            if (screen.orientation && screen.orientation.lock) {
-                try {
-                    await screen.orientation.lock('landscape');
-                } catch (e) {}
-            }
-        });
+    // ── Custom Install Prompt ────────────────────────────────────────
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
 
-        // Cegah zoom & scroll
-        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
-    </script>
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();               // cegah banner otomatis Chrome
+      deferredPrompt = e;
+      installBtn.style.display = 'block'; // tampilkan tombol custom
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('User choice:', outcome);
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+
+    // ── Force Fullscreen & Landscape ─────────────────────────────────
+    async function activateFullscreenAndOrientation() {
+      // Fullscreen
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        try {
+          await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+        } catch {}
+      }
+
+      // Lock orientation ke landscape (bekerja baik di PWA terinstall)
+      if (screen.orientation && screen.orientation.lock) {
+        try {
+          await screen.orientation.lock('landscape-primary');
+        } catch {}
+      }
+    }
+
+    // Jalankan saat load + saat visibility change (kembali dari background)
+    window.addEventListener('load', activateFullscreenAndOrientation);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        activateFullscreenAndOrientation();
+      }
+    });
+
+    // Cegah scroll/zoom
+    document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    document.addEventListener('gesturestart', e => e.preventDefault());
+  </script>
 </body>
 </html>
